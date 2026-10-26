@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light" />
+  <title>墨净 · 小说清洗台</title>
+  <meta name="description" content="规则 + 本地模型路由的小说数据清洗台：截断、章节、广告、空行、缩进、编码、不可见字符，逐条对比。" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="paper-noise" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <button class="brand" id="brandBtn" type="button" aria-label="回到首页">
+      <span class="brand-mark">墨</span>
+      <span class="brand-copy"><strong>墨净</strong><small>NOVEL CLEAN</small></span>
+    </button>
+
+    <div class="topbar-context" id="topbarContext">
+      <span class="context-kicker">LOCAL-FIRST</span>
+      <span class="context-sep">/</span>
+      <span>小说数据清洗台</span>
+    </div>
+
+    <div class="topbar-actions">
+      <button class="model-pill" id="modelPill" type="button" aria-haspopup="dialog" title="点击切换模型">
+        <span class="status-dot" id="modelDot"></span>
+        <span id="modelPillText">本地模型 · 检测中</span>
+        <span class="pill-caret">▾</span>
+      </button>
+      <button class="ghost-btn" id="newBtn" type="button" hidden>＋ 导入新稿</button>
+    </div>
+  </header>
+
+  <main id="homeView" class="home-view">
+    <div class="home-grid">
+      <section class="home-main">
+        <p class="eyebrow"><span class="eyebrow-line"></span> SOFTWARE × LOCAL ROUTER</p>
+        <h1 class="hero-title">让句子，<br /><em>回到它本来的样子。</em></h1>
+        <p class="hero-lede">
+          七项检查，逐条对照。规则负责确定性，本地模型路由只复核疑点。
+          原稿不离开这台机器，清洗结果以 UTF-8 交付。
+        </p>
+
+        <div class="import-card" id="dropZone">
+          <div class="import-card-head">
+            <span class="section-label">01 / 导入原稿</span>
+            <span class="privacy-note"><span class="lock-dot"></span> 全文仅本机处理</span>
+          </div>
+
+          <div class="drop-area" id="dropTarget" tabindex="0" role="button" aria-label="选择或拖入小说文件">
+            <div class="drop-glyph" aria-hidden="true">
+              <span></span><span></span><span></span>
+            </div>
+            <div class="drop-copy">
+              <strong>把小说拖进来</strong>
+              <span>或点击选择文件 · .txt / .md · 最大 32 MB</span>
+            </div>
+            <span class="drop-key">Ctrl O</span>
+          </div>
+
+          <div class="import-actions">
+            <button class="primary-btn" id="chooseBtn" type="button">选择文件 <span class="btn-arrow">↗</span></button>
+            <button class="text-btn" id="pasteBtn" type="button">粘贴文本</button>
+            <label class="ai-switch" title="关闭后仅使用规则引擎">
+              <input type="checkbox" id="useAi" checked />
+              <span class="switch-track"><span class="switch-thumb"></span></span>
+              <span class="switch-label">模型复核</span>
+            </label>
+          </div>
+
+          <div class="sample-row">
+            <span class="sample-label">没有稿子？</span>
+            <button type="button" class="sample-link" data-sample="utf8">载入污染示例 <small>UTF-8 BOM</small></button>
+            <button type="button" class="sample-link" data-sample="gbk">GBK 旧稿 <small>旧编码</small></button>
+          </div>
+
+          <details class="path-import">
+            <summary>文件选择器没反应，或选完提示 0 字节？改用本地路径</summary>
+            <div class="path-row">
+              <input id="pathInput" type="text" spellcheck="false" placeholder="C:\Users\win\Documents\小说.txt" aria-label="本地文件绝对路径" />
+              <button type="button" class="text-btn" id="pathBtn">读取并清洗</button>
+            </div>
+            <p>由本机 127.0.0.1 服务直接读取，路径不会上传。支持 UTF-8 / GBK / UTF-16。</p>
+          </details>
+
+          <details class="path-import">
+            <summary>打开已有工程，继续二次优化</summary>
+            <div class="path-row">
+              <input id="projectPathInput" type="text" spellcheck="false" placeholder="C:\Users\win\Documents\书名-工程" aria-label="工程目录路径" />
+              <button type="button" class="text-btn" id="openProjectBtn">打开工程</button>
+            </div>
+            <p>填工程目录（包含 project.json / state.json / source.* / target.utf8.txt）。</p>
+          </details>
+
+          <p class="import-error" id="importError" hidden></p>
+        </div>
+
+        <div class="home-footnote">
+          <div><b>7</b><span>项检查</span></div>
+          <div><b>5</b><span>个半角空格 / 段</span></div>
+          <div><b>0</b><span>字节离开本机</span></div>
+        </div>
+      </section>
+
+      <aside class="home-aside">
+        <div class="syllabus">
+          <div class="syllabus-head">
+            <span class="section-label">清洗清单</span>
+            <span class="syllabus-count">07</span>
+          </div>
+          <ol class="syllabus-list">
+            <li>
+              <span class="syllabus-no">01</span>
+              <div><strong>语句截断</strong><span>行尾断句、引号未闭合、回车拆句</span></div>
+              <em class="engine engine-ai">规则 + AI</em>
+            </li>
+            <li>
+              <span class="syllabus-no">02</span>
+              <div><strong>章节连续</strong><span>缺章、重号、倒退、分卷干扰</span></div>
+              <em class="engine">编号序列</em>
+            </li>
+            <li>
+              <span class="syllabus-no">03</span>
+              <div><strong>无关内容</strong><span>广告、作者留言、网址、无意义符号</span></div>
+              <em class="engine engine-ai">词法 + AI</em>
+            </li>
+            <li>
+              <span class="syllabus-no">04</span>
+              <div><strong>多余空行</strong><span>段间空行、章节前空行、首尾空行</span></div>
+              <em class="engine">排版规则</em>
+            </li>
+            <li>
+              <span class="syllabus-no">05</span>
+              <div><strong>段落缩进</strong><span>统一为 5 个半角空格，标题顶格</span></div>
+              <em class="engine">5 空格</em>
+            </li>
+            <li>
+              <span class="syllabus-no">06</span>
+              <div><strong>文本编码</strong><span>GBK / UTF-16 / BOM → UTF-8 无 BOM</span></div>
+              <em class="engine">编码规则</em>
+            </li>
+            <li>
+              <span class="syllabus-no">07</span>
+              <div><strong>不可见字符</strong><span>零宽、方向控制、变体符、异常空格</span></div>
+              <em class="engine">Unicode</em>
+            </li>
+          </ol>
+        </div>
+
+        <div class="model-card" id="modelCard">
+          <div class="model-card-top">
+            <span class="section-label">本地推理</span>
+            <span class="model-state" id="modelState"><span class="status-dot"></span>检测中</span>
+          </div>
+          <div class="model-name" id="modelName">本地模型路由</div>
+          <div class="model-meta" id="modelMeta">正在连接模型路由…</div>
+          <div class="model-rule"><span></span>AI 只判断“是否合并 / 是否删除”，不重写正文。</div>
+        </div>
+
+        <p class="aside-note">“软件能机械验证的，不交给模型猜。<br />模型拿不准的，软件保留否决权。”</p>
+      </aside>
+    </div>
+  </main>
+
+  <main id="workView" class="work-view" hidden>
+    <section class="work-head">
+      <div class="work-title-wrap">
+        <button class="back-btn" id="backBtn" type="button" aria-label="返回">←</button>
+        <div>
+          <p class="eyebrow"><span class="eyebrow-line"></span> CLEANING DESK</p>
+          <h2 id="docTitle">未命名稿件</h2>
+          <p class="file-line"><span id="fileName">—</span><span class="dot-sep">·</span><span id="fileEncoding">—</span><span class="dot-sep">·</span><span id="fileMeta">—</span></p>
+        </div>
+      </div>
+      <div class="work-head-actions">
+        <button class="ghost-btn" id="toggleLogBtn" type="button">处理记录</button>
+        <button class="primary-btn" id="exportBtn" type="button">导出工程 <span class="btn-arrow">↓</span></button>
+      </div>
+    </section>
+
+    <section class="summary-band">
+      <div class="char-compare">
+        <div class="char-block"><span id="charsBefore">0</span><small>原稿字符</small></div>
+        <span class="char-arrow">→</span>
+        <div class="char-block accent"><span id="charsAfter">0</span><small>清洗后</small></div>
+        <span class="char-delta" id="charDelta">—</span>
+      </div>
+      <div class="run-status">
+        <div class="run-status-line"><span class="status-dot ok" id="runDot"></span><strong id="runTitle">清洗完成</strong></div>
+        <p id="runDetail">—</p>
+      </div>
+      <div class="ai-summary">
+        <span class="section-label">MODEL ROUTER</span>
+        <strong id="aiModel">—</strong>
+        <span id="aiMeta">—</span>
+      </div>
+    </section>
+
+    <section class="check-strip" id="checkStrip" aria-label="七项检查"></section>
+
+    <section class="desk">
+      <aside class="issue-rail" id="issueRail">
+        <header class="rail-head">
+          <div><span class="section-label">检查记录</span><h3>逐条对照</h3></div>
+          <div class="rail-head-right">
+            <span class="rail-count" id="issueCount">0</span>
+            <button type="button" class="icon-btn" id="issueCloseBtn" aria-label="关闭检查记录">×</button>
+          </div>
+        </header>
+        <div class="rail-tabs" id="railTabs">
+          <button type="button" class="active" data-rail="all">全部</button>
+          <button type="button" data-rail="ai">AI</button>
+          <button type="button" data-rail="rule">规则</button>
+          <button type="button" data-rail="warn">待确认</button>
+        </div>
+        <div class="issue-list" id="issueList"></div>
+      </aside>
+
+      <section class="compare">
+        <div class="compare-toolbar">
+          <div class="filter-chips" id="filterChips"></div>
+          <div class="compare-tools">
+            <button type="button" class="issue-toggle-btn" id="issueToggleBtn">检查记录 <span id="issueToggleCount">0</span></button>
+            <label class="mini-check"><input type="checkbox" id="onlyChanged" /> 只看改动</label>
+            <label class="mini-check"><input type="checkbox" id="showSpaces" checked /> 空格标记</label>
+            <label class="search-box"><span>⌕</span><input id="searchInput" type="search" placeholder="搜索原文 / 清洗结果" /></label>
+          </div>
+        </div>
+
+        <div class="compare-scroll" id="compareScroll">
+          <div class="pane-head row-head">
+            <div><span class="pane-title">原稿</span><span class="pane-sub" id="origMeta">—</span></div>
+            <div><span class="pane-title">清洗后</span><span class="pane-sub" id="cleanMeta">—</span></div>
+          </div>
+          <div id="rows" class="rows"></div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <div id="progressOverlay" class="overlay" hidden>
+    <div class="progress-card" role="dialog" aria-modal="true" aria-labelledby="progressTitle">
+      <div class="progress-top">
+        <span class="section-label">CLEANING IN PROGRESS</span>
+        <span class="progress-percent" id="progressPercent">0%</span>
+      </div>
+      <div class="ink-loader" aria-hidden="true"><span></span></div>
+      <h3 id="progressTitle">正在读取原稿</h3>
+      <p id="progressDetail">检查编码与 BOM…</p>
+      <div class="progress-speed" id="progressSpeed" hidden>
+        <strong id="progressSpeedValue">—</strong><span>token/s</span>
+        <em id="progressSpeedMeta">输出速度</em>
+      </div>
+      <div class="progress-track"><span id="progressBar"></span></div>
+      <ol class="progress-steps">
+        <li data-step="decode"><span>01</span>识别编码</li>
+        <li data-step="rules"><span>02</span>规则扫描</li>
+        <li data-step="ai"><span>03</span>模型复核</li>
+        <li data-step="render"><span>04</span>生成对比</li>
+      </ol>
+      <div class="progress-foot">
+        <span id="progressAi">—</span>
+        <span>本地模型路由，首次调用可能需要加载模型</span>
+      </div>
+      <button type="button" class="text-btn progress-error-btn" id="progressErrorBtn" hidden>返回重新导入</button>
+    </div>
+  </div>
+
+  <div id="pasteModal" class="overlay" hidden>
+    <div class="paste-card" role="dialog" aria-modal="true" aria-labelledby="pasteTitle">
+      <div class="paste-head">
+        <div><span class="section-label">PASTE TEXT</span><h3 id="pasteTitle">粘贴小说文本</h3></div>
+        <button type="button" class="icon-btn" id="pasteClose" aria-label="关闭">×</button>
+      </div>
+      <input type="text" id="pasteName" class="name-input" value="粘贴稿.txt" maxlength="80" aria-label="文件名" />
+      <textarea id="pasteText" placeholder="把小说正文粘贴到这里。七项检查会在本机完成，不会上传。"></textarea>
+      <div class="paste-foot">
+        <span id="pasteCount">0 字符</span>
+        <div>
+          <button type="button" class="text-btn" id="pasteCancel">取消</button>
+          <button type="button" class="primary-btn" id="pasteStart">开始清洗 <span class="btn-arrow">→</span></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="bookModal" class="overlay" hidden>
+    <div class="book-card" role="dialog" aria-modal="true" aria-labelledby="bookTitle">
+      <div class="book-head">
+        <div><span class="section-label">BOOK NAME</span><h3 id="bookTitle">这本书叫什么？</h3></div>
+        <button type="button" class="icon-btn" id="bookClose" aria-label="关闭">×</button>
+      </div>
+      <p class="book-note">书名会用于标题与导出文件名。章节会统一为「第1章 原标题」；没有原标题时只保留「第1章」，并独占一行。</p>
+      <label class="book-field">
+        <span>书名</span>
+        <input id="bookNameInput" type="text" maxlength="80" autocomplete="off" placeholder="留空则使用文件名" />
+      </label>
+      <p class="book-default">当前文件：<code id="bookFileName">—</code></p>
+      <div class="book-actions">
+        <button type="button" class="text-btn" id="bookSkip">跳过，用文件名</button>
+        <button type="button" class="primary-btn" id="bookStart">开始清洗 <span class="btn-arrow">→</span></button>
+      </div>
+    </div>
+  </div>
+
+  <div id="issueBackdrop" class="issue-backdrop" hidden></div>
+
+  <div id="saveModal" class="overlay" hidden>
+    <div class="save-card" role="dialog" aria-modal="true" aria-labelledby="saveTitle">
+      <div class="save-head">
+        <div><span class="section-label">EXPORT PROJECT</span><h3 id="saveTitle">导出工程</h3></div>
+        <button type="button" class="icon-btn" id="saveClose" aria-label="关闭">×</button>
+      </div>
+      <p class="save-note" id="saveNote">会导出一套工程：源文件、目标文件、索引、报告和可重新加载的状态。留空则使用 Downloads。</p>
+
+      <label class="save-field">
+        <span>保存目录</span>
+        <input id="saveDirInput" type="text" spellcheck="false" placeholder="留空 = Downloads，例如 D:\小说\导出" />
+      </label>
+      <p class="save-file">文件名：<code id="saveFileName">—</code></p>
+      <p class="save-error" id="saveError" hidden></p>
+
+      <div class="save-result" id="saveResult" hidden>
+        <span class="section-label">工程目录</span>
+        <code class="save-path" id="saveProjectPath">—</code>
+        <span class="section-label">目标文件</span>
+        <code class="save-path" id="savePath">—</code>
+        <span class="section-label">报告</span>
+        <code class="save-path" id="saveReportPath">—</code>
+        <span class="section-label">索引说明</span>
+        <code class="save-path" id="saveIndexPath">—</code>
+      </div>
+
+      <div class="save-actions">
+        <button type="button" class="text-btn" id="saveCopy" hidden>复制目标路径</button>
+        <button type="button" class="text-btn" id="saveCopyReport" hidden>复制报告路径</button>
+        <button type="button" class="text-btn" id="saveCancel">取消</button>
+        <button type="button" class="primary-btn" id="saveConfirm">导出工程</button>
+        <button type="button" class="primary-btn" id="saveDone" hidden>知道了</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modelPopover" class="popover" hidden role="dialog" aria-label="本地模型">
+    <div class="popover-head">
+      <span class="section-label">LOCAL MODEL · <span id="modelCount">—</span></span>
+      <div class="popover-actions">
+        <button type="button" class="text-btn" id="modelRefresh">刷新</button>
+        <button type="button" class="icon-btn" id="modelClose" aria-label="关闭">×</button>
+      </div>
+    </div>
+    <h4 id="popoverModelName">本地模型路由</h4>
+    <p id="popoverModelMeta">正在检测模型路由…</p>
+    <div class="popover-models" id="popoverModels"></div>
+    <div class="popover-note">
+      <strong>模型不重写正文</strong>
+      <span>只回答“该不该合并 / 该不该删”。合并后的文字由软件按原文拼接并校验。</span>
+    </div>
+  </div>
+
+  <div id="logDrawer" class="log-drawer" hidden>
+    <div class="log-drawer-head">
+      <div><span class="section-label">RUN LOG</span><h3>本次处理记录</h3></div>
+      <button type="button" class="icon-btn" id="logClose" aria-label="关闭">×</button>
+    </div>
+    <div id="logBody" class="log-body"></div>
+  </div>
+
+  <input type="file" id="fileInput" hidden />
+  <div id="toast" class="toast" hidden></div>
+
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

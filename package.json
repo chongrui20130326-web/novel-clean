@@ -1,0 +1,26 @@
+{
+  "name": "novel-clean",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "小说数据清洗台：规则 + 本地模型路由复核，UTF-8 输出，对比式 HMI",
+  "license": "MIT",
+  "homepage": "https://github.com/chongrui20130326-web/novel-clean",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chongrui20130326-web/novel-clean.git"
+  },
+  "bugs": {
+    "url": "https://github.com/chongrui20130326-web/novel-clean/issues"
+  },
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node tools/test.mjs",
+    "test:http": "node tools/test-http.mjs",
+    "samples": "node tools/make-samples.mjs",
+    "shots": "node tools/shoot-hmi.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
