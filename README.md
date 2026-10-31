@@ -6,7 +6,7 @@
 
 一个**本地优先**的小说清洗工具：规则负责可机械验证的部分，本地模型路由只复核语义疑点，最后用左右对比的 HMI 把「改了什么、为什么改」摊开。
 
-> 下载：[最新 Release](https://github.com/chongrui20130326-web/novel-clean/releases) · 问题：[Issues](https://github.com/chongrui20130326-web/novel-clean/issues)
+> 下载：[最新 Release](https://github.com/chongrui20130326-web/novel-clean/releases) · 问题：[Issues](https://github.com/chongrui20130326-web/novel-clean/issues) · 开发集成：[docs/INTEGRATION.md](docs/INTEGRATION.md)
 
 ![清洗台](screenshots/ui-workspace.png)
 
@@ -404,6 +404,7 @@ novel-clean/
 ├── ui/                        index.html / style.css / app.js
 ├── service/                    登录自启 + 看门狗
 ├── samples/                   UTF-8 BOM / GBK 示例
+├── docs/INTEGRATION.md        二次开发与宿主集成说明
 ├── screenshots/               HMI 截图
 ├── tools/
 │   ├── test.mjs               引擎回归（14 项）
